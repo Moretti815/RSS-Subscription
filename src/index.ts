@@ -7,7 +7,7 @@ const app = new Hono<HonoEnv>();
 
 // 添加CORS中间件
 app.use('*', cors({
-    origin: ['https://rss-api.040720.xyz', 'https://rss-cloudflare.1946815225.workers.dev', 'http://localhost:4321', 'https://blog.helong.online'],
+    origin: ['https://rss-sub.20050815.xyz', 'http://localhost:4321'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization', 'Cookie'],
     exposeHeaders: ['Content-Length', 'Set-Cookie'],
