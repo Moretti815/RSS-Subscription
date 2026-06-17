@@ -74,6 +74,11 @@ ALLOWED_GITHUB_USERS=user1,user2
 APP_URL=https://your-worker-domain
 ```
 
+## RSS XML Feed
+
+- `GET /rss.xml`: public aggregated RSS feed for RSS readers
+- `R2/rss.xml`: generated together with `R2/rss.json` when refresh finds new items
+
 ## API 文档
 
 ### 公开 API

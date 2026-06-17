@@ -4,6 +4,10 @@ import Parser from 'rss-parser';
 import { RSSFeed, RSSItem, HonoEnv, AppContext, GitHubUser, GitHubTokenResponse, Bindings } from './types';
 
 const app = new Hono<HonoEnv>();
+const RSS_JSON_KEY = 'rss.json';
+const RSS_XML_KEY = 'rss.xml';
+const RSS_FEED_TITLE = 'RSS Subscription';
+const RSS_FEED_DESCRIPTION = 'Aggregated RSS items from subscribed feeds';
 
 // 添加CORS中间件
 app.use('*', cors({
@@ -17,15 +21,18 @@ app.use('*', cors({
 
 const parser = new Parser();
 
-function getAppBaseUrl(c: AppContext): string {
-    const requestOrigin = new URL(c.req.url).origin;
-    const configuredAppUrl = c.env.APP_URL?.trim();
+function getConfiguredAppBaseUrl(env: Bindings, fallbackOrigin = ''): string {
+    const configuredAppUrl = env.APP_URL?.trim();
 
     if (!configuredAppUrl) {
-        return requestOrigin;
+        return fallbackOrigin.replace(/\/+$/, '');
     }
 
     return configuredAppUrl.replace(/\/+$/, '');
+}
+
+function getAppBaseUrl(c: AppContext): string {
+    return getConfiguredAppBaseUrl(c.env, new URL(c.req.url).origin);
 }
 
 function buildFaviconUrl(feedUrl: string): string {
@@ -64,12 +71,119 @@ function filterItemsByAuthor(items: RSSItem[], author?: string): RSSItem[] {
 }
 
 async function loadStoredRssItems(env: HonoEnv['Bindings']): Promise<RSSItem[]> {
-    const rssData = await env.RSS_BUCKET.get('rss.json');
+    const rssData = await env.RSS_BUCKET.get(RSS_JSON_KEY);
     if (!rssData) {
         return [];
     }
 
-    return JSON.parse(await rssData.text()) as RSSItem[];
+    try {
+        return JSON.parse(await rssData.text()) as RSSItem[];
+    } catch (error) {
+        console.error('Failed to parse stored RSS items:', error);
+        return [];
+    }
+}
+
+async function loadStoredRssXml(env: HonoEnv['Bindings']): Promise<string | null> {
+    const rssXml = await env.RSS_BUCKET.get(RSS_XML_KEY);
+    if (!rssXml) {
+        return null;
+    }
+
+    return await rssXml.text();
+}
+
+function escapeXml(value: string): string {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+function formatRssDate(value: string, fallback: string): string {
+    const timestamp = Date.parse(value);
+    if (Number.isNaN(timestamp)) {
+        return fallback;
+    }
+
+    return new Date(timestamp).toUTCString();
+}
+
+function buildRssItemKey(item: RSSItem): string {
+    const link = item.link.trim();
+    if (link) {
+        return link;
+    }
+
+    return [
+        item.title.trim(),
+        item.date.trim(),
+        item.author.trim(),
+    ].join('\u0001');
+}
+
+function normalizeRssItems(items: RSSItem[]): RSSItem[] {
+    const uniqueItems = new Map<string, RSSItem>();
+
+    for (const item of items) {
+        const normalizedItem: RSSItem = {
+            title: item.title.trim(),
+            author: item.author.trim(),
+            date: item.date.trim(),
+            link: item.link.trim(),
+            content: item.content.trim(),
+        };
+
+        uniqueItems.set(buildRssItemKey(normalizedItem), normalizedItem);
+    }
+
+    return Array.from(uniqueItems.values()).sort((a, b) => {
+        const diff = Date.parse(b.date) - Date.parse(a.date);
+        if (diff !== 0) {
+            return diff;
+        }
+
+        return buildRssItemKey(b).localeCompare(buildRssItemKey(a));
+    });
+}
+
+function buildRssXml(items: RSSItem[], baseUrl: string): string {
+    const feedUrl = `${baseUrl.replace(/\/+$/, '')}/rss.xml`;
+    const generatedAt = new Date().toUTCString();
+
+    const itemXml = items.map((item) => {
+        const description = item.content || item.title;
+        const pubDate = formatRssDate(item.date, generatedAt);
+        const guid = item.link || buildRssItemKey(item);
+
+        return [
+            '    <item>',
+            `      <title>${escapeXml(item.title)}</title>`,
+            `      <link>${escapeXml(item.link)}</link>`,
+            `      <guid isPermaLink="${item.link ? 'true' : 'false'}">${escapeXml(guid)}</guid>`,
+            `      <pubDate>${escapeXml(pubDate)}</pubDate>`,
+            `      <author>${escapeXml(item.author)}</author>`,
+            `      <description>${escapeXml(description)}</description>`,
+            '    </item>',
+        ].join('\n');
+    }).join('\n');
+
+    return [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+        '  <channel>',
+        `    <title>${escapeXml(RSS_FEED_TITLE)}</title>`,
+        `    <link>${escapeXml(feedUrl)}</link>`,
+        `    <description>${escapeXml(RSS_FEED_DESCRIPTION)}</description>`,
+        '    <language>zh-cn</language>',
+        `    <lastBuildDate>${escapeXml(generatedAt)}</lastBuildDate>`,
+        `    <atom:link href="${escapeXml(feedUrl)}" rel="self" type="application/rss+xml" />`,
+        itemXml,
+        '  </channel>',
+        '</rss>',
+    ].join('\n');
 }
 
 // 认证中间件
@@ -447,18 +561,42 @@ app.get('/api/rss/public', async (c) => {
 });
 
 // 刷新RSS内容
+// Public RSS XML feed
+app.get('/rss.xml', async (c) => {
+    try {
+        const storedXml = await loadStoredRssXml(c.env);
+        const xml = storedXml ?? buildRssXml(await loadStoredRssItems(c.env), getAppBaseUrl(c));
+
+        return new Response(xml, {
+            headers: {
+                'Content-Type': 'application/rss+xml; charset=utf-8',
+            },
+        });
+    } catch (error) {
+        console.error('Failed to load generated RSS XML:', error);
+        return c.text('Failed to load RSS XML', 500);
+    }
+});
+
+// Refresh RSS content
 app.post('/api/rss/refresh', authMiddleware, async (c) => {
     try {
-        await refreshAllFeeds(c.env);
-        return c.json({ success: true, message: 'RSS content refreshed' });
+        const result = await refreshAllFeeds(c.env);
+        return c.json({
+            success: true,
+            message: result.updated ? 'RSS content refreshed' : 'No new RSS items found',
+            updated: result.updated,
+            itemCount: result.itemCount,
+        });
     } catch (error) {
         return c.json({ error: 'Failed to refresh RSS content' }, 500);
     }
 });
 
 // 抓取所有订阅源并存储到R2
-async function refreshAllFeeds(env: HonoEnv['Bindings']) {
+async function refreshAllFeeds(env: HonoEnv['Bindings']): Promise<{ updated: boolean; itemCount: number }> {
     const feeds: RSSFeed[] = await env.RSS_FEEDS.get('feeds', 'json') || [];
+    const existingItems = normalizeRssItems(await loadStoredRssItems(env));
     const items: RSSItem[] = [];
     
     console.log(`Refreshing ${feeds.length} feeds`);
@@ -487,11 +625,19 @@ async function refreshAllFeeds(env: HonoEnv['Bindings']) {
         }
     }
     
-    items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    if (items.length > 0) {
-        await env.RSS_BUCKET.put('rss.json', JSON.stringify(items));
-        console.log(`Stored ${items.length} RSS items to R2`);
+    const mergedItems = normalizeRssItems([...existingItems, ...items]);
+    const updated = JSON.stringify(existingItems) !== JSON.stringify(mergedItems);
+
+    if (updated) {
+        await env.RSS_BUCKET.put(RSS_JSON_KEY, JSON.stringify(mergedItems));
+        await env.RSS_BUCKET.put(RSS_XML_KEY, buildRssXml(mergedItems, getConfiguredAppBaseUrl(env)));
+        console.log(`Stored ${mergedItems.length} RSS items and regenerated ${RSS_XML_KEY}`);
     }
+
+    return {
+        updated,
+        itemCount: mergedItems.length,
+    };
 }
 
 // 导出：
