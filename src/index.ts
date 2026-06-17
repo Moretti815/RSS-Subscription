@@ -17,6 +17,17 @@ app.use('*', cors({
 
 const parser = new Parser();
 
+function getAppBaseUrl(c: AppContext): string {
+    const requestOrigin = new URL(c.req.url).origin;
+    const configuredAppUrl = c.env.APP_URL?.trim();
+
+    if (!configuredAppUrl) {
+        return requestOrigin;
+    }
+
+    return configuredAppUrl.replace(/\/+$/, '');
+}
+
 // 内容清理函数
 function sanitizeContent(content: string): string {
     return content
@@ -150,7 +161,7 @@ const LAST_FETCH_TIME_KEY = 'rss_last_fetch_time';
 // GitHub OAuth 路由
 app.get('/auth/github', (c) => {
     const clientId = c.env.GITHUB_CLIENT_ID;
-    const redirectUri = `${c.env.APP_URL}/auth/github/callback`;
+    const redirectUri = `${getAppBaseUrl(c)}/auth/github/callback`;
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email`;
     return c.redirect(githubAuthUrl);
 });
@@ -172,6 +183,7 @@ app.get('/auth/github/callback', async (c) => {
                 client_id: c.env.GITHUB_CLIENT_ID,
                 client_secret: c.env.GITHUB_CLIENT_SECRET,
                 code: code,
+                redirect_uri: `${getAppBaseUrl(c)}/auth/github/callback`,
             }),
         });
 
