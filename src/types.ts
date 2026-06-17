@@ -38,7 +38,6 @@ export interface Bindings {
     GITHUB_CLIENT_SECRET: string;
     ALLOWED_GITHUB_USERS: string;
     APP_URL: string;
-    IMG_PROXY_URL: string;
     [key: string]: unknown;
 }
 

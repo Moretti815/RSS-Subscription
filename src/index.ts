@@ -28,19 +28,20 @@ function getAppBaseUrl(c: AppContext): string {
     return configuredAppUrl.replace(/\/+$/, '');
 }
 
-function buildFaviconUrl(env: HonoEnv['Bindings'], feedUrl: string): string {
-    const faviconBaseUrl = env.IMG_PROXY_URL?.trim() || 'https://favicon.im';
-    return `${faviconBaseUrl.replace(/\/+$/, '')}/${new URL(feedUrl).hostname}`;
+function buildFaviconUrl(feedUrl: string): string {
+    return `https://favicon.yandex.net/favicon/${new URL(feedUrl).hostname}`;
 }
 
-function normalizeFeedFavicon(env: HonoEnv['Bindings'], feed: RSSFeed): RSSFeed {
-    if (feed.favicon && !feed.favicon.startsWith('undefined/')) {
+function normalizeFeedFavicon(feed: RSSFeed): RSSFeed {
+    const expectedFavicon = buildFaviconUrl(feed.url);
+
+    if (feed.favicon === expectedFavicon) {
         return feed;
     }
 
     return {
         ...feed,
-        favicon: buildFaviconUrl(env, feed.url),
+        favicon: expectedFavicon,
     };
 }
 
@@ -354,7 +355,7 @@ app.get('/api/user', async (c) => {
 app.get('/api/feeds', authMiddleware, async (c) => {
     try {
         const feeds: RSSFeed[] = await c.env.RSS_FEEDS.get('feeds', 'json') || [];
-        return c.json(feeds.map((feed) => normalizeFeedFavicon(c.env, feed)));
+        return c.json(feeds.map((feed) => normalizeFeedFavicon(feed)));
     } catch (error) {
         return c.json({ error: 'Failed to load feeds' }, 500);
     }
@@ -385,7 +386,7 @@ app.post('/api/feeds', authMiddleware, async (c) => {
         const newFeed: RSSFeed = {
             url,
             title: feedContent.title || 'Unknown Feed',
-            favicon: buildFaviconUrl(c.env, url),
+            favicon: buildFaviconUrl(url),
             addedBy: 'user',
             addedAt: new Date().toISOString()
         };

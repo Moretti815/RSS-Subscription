@@ -37,7 +37,6 @@ Worker 代码当前依赖以下绑定和环境变量：
 - `GITHUB_CLIENT_SECRET`
 - `ALLOWED_GITHUB_USERS`
 - `APP_URL`
-- `IMG_PROXY_URL`
 
 ## 本地开发
 
@@ -73,7 +72,6 @@ GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 ALLOWED_GITHUB_USERS=user1,user2
 APP_URL=https://your-worker-domain
-IMG_PROXY_URL=https://your-image-proxy-domain
 ```
 
 ## API 文档
