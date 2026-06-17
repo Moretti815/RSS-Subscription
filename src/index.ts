@@ -28,6 +28,22 @@ function getAppBaseUrl(c: AppContext): string {
     return configuredAppUrl.replace(/\/+$/, '');
 }
 
+function buildFaviconUrl(env: HonoEnv['Bindings'], feedUrl: string): string {
+    const faviconBaseUrl = env.IMG_PROXY_URL?.trim() || 'https://favicon.im';
+    return `${faviconBaseUrl.replace(/\/+$/, '')}/${new URL(feedUrl).hostname}`;
+}
+
+function normalizeFeedFavicon(env: HonoEnv['Bindings'], feed: RSSFeed): RSSFeed {
+    if (feed.favicon && !feed.favicon.startsWith('undefined/')) {
+        return feed;
+    }
+
+    return {
+        ...feed,
+        favicon: buildFaviconUrl(env, feed.url),
+    };
+}
+
 // 内容清理函数
 function sanitizeContent(content: string): string {
     return content
@@ -338,7 +354,7 @@ app.get('/api/user', async (c) => {
 app.get('/api/feeds', authMiddleware, async (c) => {
     try {
         const feeds: RSSFeed[] = await c.env.RSS_FEEDS.get('feeds', 'json') || [];
-        return c.json(feeds);
+        return c.json(feeds.map((feed) => normalizeFeedFavicon(c.env, feed)));
     } catch (error) {
         return c.json({ error: 'Failed to load feeds' }, 500);
     }
@@ -369,7 +385,7 @@ app.post('/api/feeds', authMiddleware, async (c) => {
         const newFeed: RSSFeed = {
             url,
             title: feedContent.title || 'Unknown Feed',
-            favicon: `${c.env.IMG_PROXY_URL}/${new URL(url).hostname}`,
+            favicon: buildFaviconUrl(c.env, url),
             addedBy: 'user',
             addedAt: new Date().toISOString()
         };
