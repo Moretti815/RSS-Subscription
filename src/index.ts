@@ -37,6 +37,24 @@ function sanitizeContent(content: string): string {
         .slice(0, 100);
 }
 
+function filterItemsByAuthor(items: RSSItem[], author?: string): RSSItem[] {
+    if (!author) {
+        return items;
+    }
+
+    const normalizedAuthor = author.toLowerCase();
+    return items.filter((item) => item.author.toLowerCase().includes(normalizedAuthor));
+}
+
+async function loadStoredRssItems(env: HonoEnv['Bindings']): Promise<RSSItem[]> {
+    const rssData = await env.RSS_BUCKET.get('rss.json');
+    if (!rssData) {
+        return [];
+    }
+
+    return JSON.parse(await rssData.text()) as RSSItem[];
+}
+
 // 认证中间件
 const authMiddleware = async (c: AppContext, next: () => Promise<void>) => {
     try {
@@ -386,24 +404,25 @@ app.delete('/api/feeds/:url', authMiddleware, async (c) => {
 });
 
 // 获取RSS内容（公开API）
+app.get('/api/rss', authMiddleware, async (c) => {
+    try {
+        const items = await loadStoredRssItems(c.env);
+        const author = c.req.query('author');
+
+        return c.json(filterItemsByAuthor(items, author));
+    } catch (error) {
+        console.error('Failed to load RSS content:', error);
+        return c.json({ error: 'Failed to load RSS content' }, 500);
+    }
+});
+
+// 鑾峰彇RSS鍐呭锛堝叕寮€API锛?
 app.get('/api/rss/public', async (c) => {
     try {
-        const rssData = await c.env.RSS_BUCKET.get('rss.json');
-        if (!rssData) {
-            return c.json([]);
-        }
-        
-        const items: RSSItem[] = JSON.parse(await rssData.text());
+        const items = await loadStoredRssItems(c.env);
         const author = c.req.query('author');
-        
-        if (author) {
-            const filteredItems = items.filter(item => 
-                item.author.toLowerCase().includes(author.toLowerCase())
-            );
-            return c.json(filteredItems);
-        }
-        
-        return c.json(items);
+
+        return c.json(filterItemsByAuthor(items, author));
     } catch (error) {
         console.error('Failed to load RSS content:', error);
         return c.json({ error: 'Failed to load RSS content' }, 500);
