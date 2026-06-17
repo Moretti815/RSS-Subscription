@@ -82,6 +82,54 @@
             }
         }
 
+        :root[data-theme="light"] {
+            color-scheme: light;
+            --background-color: #f5f5f5;
+            --surface-muted: #eef2f7;
+            --card-background: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --overlay-color: rgba(15, 23, 42, 0.55);
+            --message-error-bg: #fef2f2;
+            --message-error-border: #fee2e2;
+            --message-success-bg: #f0fdf4;
+            --message-success-border: #dcfce7;
+            --method-get-bg: #dbeafe;
+            --method-get-text: #1e40af;
+            --method-post-bg: #dcfce7;
+            --method-post-text: #166534;
+            --method-delete-bg: #fee2e2;
+            --method-delete-text: #991b1b;
+            --focus-ring: rgba(37, 99, 235, 0.35);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --background-color: #0f172a;
+            --surface-muted: #162033;
+            --card-background: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --overlay-color: rgba(2, 6, 23, 0.72);
+            --message-error-bg: #450a0a;
+            --message-error-border: #991b1b;
+            --message-success-bg: #052e16;
+            --message-success-border: #166534;
+            --method-get-bg: #1e3a8a;
+            --method-get-text: #bfdbfe;
+            --method-post-bg: #166534;
+            --method-post-text: #bbf7d0;
+            --method-delete-bg: #991b1b;
+            --method-delete-text: #fecaca;
+            --focus-ring: rgba(96, 165, 250, 0.45);
+            --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.45);
+            --shadow: 0 20px 25px -15px rgb(2 6 23 / 0.65);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -264,6 +312,17 @@
 
         button.info:hover:not(:disabled) {
             background-color: var(--info-hover);
+        }
+
+        .theme-toggle {
+            background-color: var(--card-background);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .theme-toggle:hover:not(:disabled) {
+            background-color: var(--surface-muted);
         }
 
         button.warning {
@@ -786,6 +845,7 @@
                 </button>
             </div>
             <div class="header-right">
+                <button class="theme-toggle" id="themeToggle" type="button" title="Toggle theme">Dark</button>
                 <div class="user-info">
                     <img id="userAvatar" class="user-avatar" src="" alt="用户头像">
                     <span id="userName" class="user-name"></span>
@@ -1324,6 +1384,29 @@
         }
 
         // 返回顶部功能
+        function getPreferredTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light' || savedTheme === 'dark') {
+                return savedTheme;
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.dataset.theme = theme;
+            const button = document.getElementById('themeToggle');
+            button.textContent = theme === 'dark' ? 'Light' : 'Dark';
+        }
+
+        function toggleTheme() {
+            const nextTheme = getPreferredTheme() === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', nextTheme);
+            applyTheme(nextTheme);
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        applyTheme(getPreferredTheme());
+
         const backToTopButton = document.getElementById('backToTop');
         backToTopButton.type = 'button';
         backToTopButton.setAttribute('aria-label', 'Back to top');

@@ -44,6 +44,42 @@
             }
         }
 
+        :root[data-theme="light"] {
+            color-scheme: light;
+            --background-color: #f5f5f5;
+            --card-background: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #eaeaea;
+            --link-color: #0070f3;
+            --link-hover: #0051a2;
+            --button-background: #24292e;
+            --button-hover: #2c3238;
+            --message-error-bg: #f8d7da;
+            --message-error-border: #f5c6cb;
+            --message-error-text: #dc3545;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --focus-ring: rgba(37, 99, 235, 0.35);
+        }
+
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --background-color: #0f172a;
+            --card-background: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --link-color: #60a5fa;
+            --link-hover: #93c5fd;
+            --button-background: #111827;
+            --button-hover: #1f2937;
+            --message-error-bg: #450a0a;
+            --message-error-border: #991b1b;
+            --message-error-text: #fecaca;
+            --shadow: 0 20px 25px -15px rgba(2, 6, 23, 0.65);
+            --focus-ring: rgba(96, 165, 250, 0.45);
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
@@ -62,6 +98,35 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 16px 20px 0;
+        }
+
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            background-color: var(--card-background);
+            color: var(--text-primary);
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--background-color);
+        }
+
+        .theme-toggle:focus-visible {
+            outline: 3px solid var(--focus-ring);
+            outline-offset: 2px;
         }
 
         .footer {
@@ -153,6 +218,20 @@
 </head>
 
 <body>
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light' || savedTheme === 'dark') {
+                document.documentElement.dataset.theme = savedTheme;
+            }
+        })();
+    </script>
+    <div class="topbar">
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+            <span id="themeToggleIcon">D</span>
+            <span id="themeToggleText">Dark</span>
+        </button>
+    </div>
     <div class="main-content">
         <div class="login-container">
             <div class="logo">
@@ -215,6 +294,36 @@
         }
 
         // 页面加载时检查错误信息
+        function getPreferredTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light' || savedTheme === 'dark') {
+                return savedTheme;
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.dataset.theme = theme;
+            const icon = document.getElementById('themeToggleIcon');
+            const text = document.getElementById('themeToggleText');
+
+            if (theme === 'dark') {
+                icon.textContent = 'L';
+                text.textContent = 'Light';
+            } else {
+                icon.textContent = 'D';
+                text.textContent = 'Dark';
+            }
+        }
+
+        function toggleTheme() {
+            const nextTheme = getPreferredTheme() === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', nextTheme);
+            applyTheme(nextTheme);
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        applyTheme(getPreferredTheme());
         window.onload = checkErrorMessage;
     </script>
 </body>
