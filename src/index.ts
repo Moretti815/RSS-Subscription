@@ -79,10 +79,13 @@ app.get('/login', (c) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - RSS订阅服务</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
-        .login-btn { background: #24292e; color: white; padding: 12px 24px; border: none; border-radius: 6px; text-decoration: none; display: inline-block; margin-top: 20px; }
-        .login-btn:hover { background: #444; }
+        :root { color-scheme: light; --background-color: #f5f5f5; --card-background: #ffffff; --text-primary: #1e293b; --text-secondary: #64748b; --button-background: #24292e; --button-hover: #444444; --shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        @media (prefers-color-scheme: dark) { :root { color-scheme: dark; --background-color: #0f172a; --card-background: #1e293b; --text-primary: #f8fafc; --text-secondary: #94a3b8; --button-background: #111827; --button-hover: #1f2937; --shadow: 0 20px 25px -15px rgba(2,6,23,0.65); } }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: var(--background-color); color: var(--text-primary); transition: background-color 0.2s ease, color 0.2s ease; }
+        .container { max-width: 400px; margin: 100px auto; background: var(--card-background); padding: 40px; border-radius: 10px; box-shadow: var(--shadow); text-align: center; }
+        p { color: var(--text-secondary); }
+        .login-btn { background: var(--button-background); color: white; padding: 12px 24px; border: none; border-radius: 6px; text-decoration: none; display: inline-block; margin-top: 20px; }
+        .login-btn:hover { background: var(--button-hover); }
     </style>
 </head>
 <body>
@@ -103,13 +106,17 @@ app.get('/', authMiddleware, (c) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSS订阅服务</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        :root { color-scheme: light; --background-color: #f5f5f5; --card-background: #ffffff; --text-primary: #1e293b; --text-secondary: #64748b; --success-color: #28a745; --warning-color: #f59e0b; --info-color: #17a2b8; --button-color: #475569; --shadow: 0 10px 25px rgba(15,23,42,0.08); }
+        @media (prefers-color-scheme: dark) { :root { color-scheme: dark; --background-color: #0f172a; --card-background: #1e293b; --text-primary: #f8fafc; --text-secondary: #94a3b8; --success-color: #16a34a; --warning-color: #d97706; --info-color: #0891b2; --button-color: #334155; --shadow: 0 20px 25px -15px rgba(2,6,23,0.65); } }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: var(--background-color); color: var(--text-primary); transition: background-color 0.2s ease, color 0.2s ease; }
         .container { max-width: 1200px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
-        .success { background: #28a745; color: white; }
-        .warning { background: #f59e0b; color: white; }
-        .info { background: #17a2b8; color: white; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 20px; background: var(--card-background); border-radius: 12px; box-shadow: var(--shadow); }
+        #content { background: var(--card-background); border-radius: 12px; box-shadow: var(--shadow); padding: 20px; }
+        p { color: var(--text-secondary); }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; background: var(--button-color); color: white; }
+        .success { background: var(--success-color); color: white; }
+        .warning { background: var(--warning-color); color: white; }
+        .info { background: var(--info-color); color: white; }
     </style>
 </head>
 <body>

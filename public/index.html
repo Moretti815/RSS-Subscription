@@ -22,6 +22,7 @@
         }
 
         :root {
+            color-scheme: light;
             --primary-color: #2563eb;
             --primary-hover: #1d4ed8;
             --danger-color: #dc2626;
@@ -30,14 +31,55 @@
             --success-hover: #15803d;
             --info-color: #0891b2;
             --info-hover: #0e7490;
+            --warning-color: #f59e0b;
+            --warning-hover: #d97706;
             --background-color: #f5f5f5;
+            --surface-muted: #eef2f7;
             --card-background: #ffffff;
             --text-primary: #1e293b;
             --text-secondary: #64748b;
             --border-color: #e2e8f0;
+            --overlay-color: rgba(15, 23, 42, 0.55);
+            --message-error-bg: #fef2f2;
+            --message-error-border: #fee2e2;
+            --message-success-bg: #f0fdf4;
+            --message-success-border: #dcfce7;
+            --method-get-bg: #dbeafe;
+            --method-get-text: #1e40af;
+            --method-post-bg: #dcfce7;
+            --method-post-text: #166534;
+            --method-delete-bg: #fee2e2;
+            --method-delete-text: #991b1b;
+            --focus-ring: rgba(37, 99, 235, 0.35);
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             --radius: 0.75rem;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+                --background-color: #0f172a;
+                --surface-muted: #162033;
+                --card-background: #1e293b;
+                --text-primary: #f8fafc;
+                --text-secondary: #94a3b8;
+                --border-color: #334155;
+                --overlay-color: rgba(2, 6, 23, 0.72);
+                --message-error-bg: #450a0a;
+                --message-error-border: #991b1b;
+                --message-success-bg: #052e16;
+                --message-success-border: #166534;
+                --method-get-bg: #1e3a8a;
+                --method-get-text: #bfdbfe;
+                --method-post-bg: #166534;
+                --method-post-text: #bbf7d0;
+                --method-delete-bg: #991b1b;
+                --method-delete-text: #fecaca;
+                --focus-ring: rgba(96, 165, 250, 0.45);
+                --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.45);
+                --shadow: 0 20px 25px -15px rgb(2 6 23 / 0.65);
+            }
         }
 
         * {
@@ -83,6 +125,8 @@
             flex-direction: column;
             margin: 0;
             background-color: var(--background-color);
+            color: var(--text-primary);
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
         .header {
@@ -143,7 +187,7 @@
             align-items: center;
             gap: 0.75rem;
             padding: 0.5rem;
-            background-color: var(--background-color);
+            background-color: var(--surface-muted);
             border-radius: var(--radius);
         }
 
@@ -176,6 +220,13 @@
         button svg {
             width: 1.25rem;
             height: 1.25rem;
+        }
+
+        button:focus-visible,
+        input[type="url"]:focus-visible,
+        .back-to-top:focus-visible {
+            outline: 3px solid var(--focus-ring);
+            outline-offset: 2px;
         }
 
         button:disabled {
@@ -216,11 +267,11 @@
         }
 
         button.warning {
-            background-color: #f59e0b;
+            background-color: var(--warning-color);
         }
 
         button.warning:hover:not(:disabled) {
-            background-color: #d97706;
+            background-color: var(--warning-hover);
         }
 
         .feed-form {
@@ -242,6 +293,12 @@
             border-radius: var(--radius);
             font-size: 0.875rem;
             transition: border-color 0.2s ease;
+            background-color: var(--card-background);
+            color: var(--text-primary);
+        }
+
+        input[type="url"]::placeholder {
+            color: var(--text-secondary);
         }
 
         input[type="url"]:focus {
@@ -266,7 +323,7 @@
         }
 
         .collapsible:hover {
-            background-color: var(--background-color);
+            background-color: var(--surface-muted);
         }
 
         .section-header {
@@ -449,14 +506,14 @@
         }
 
         #messageBox.error {
-            background-color: #fef2f2;
-            border: 1px solid #fee2e2;
+            background-color: var(--message-error-bg);
+            border: 1px solid var(--message-error-border);
             color: var(--danger-color);
         }
 
         #messageBox.success {
-            background-color: #f0fdf4;
-            border: 1px solid #dcfce7;
+            background-color: var(--message-success-bg);
+            border: 1px solid var(--message-success-border);
             color: var(--success-color);
         }
 
@@ -484,7 +541,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: var(--overlay-color);
             z-index: 1000;
             padding: 1rem;
         }
@@ -526,7 +583,7 @@
             padding: 1.25rem;
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
-            background-color: var(--background-color);
+            background-color: var(--surface-muted);
         }
 
         .api-endpoint h3 {
@@ -544,18 +601,18 @@
         }
 
         .api-endpoint .method.get {
-            background-color: #dbeafe;
-            color: #1e40af;
+            background-color: var(--method-get-bg);
+            color: var(--method-get-text);
         }
 
         .api-endpoint .method.post {
-            background-color: #dcfce7;
-            color: #166534;
+            background-color: var(--method-post-bg);
+            color: var(--method-post-text);
         }
 
         .api-endpoint .method.delete {
-            background-color: #fee2e2;
-            color: #991b1b;
+            background-color: var(--method-delete-bg);
+            color: var(--method-delete-text);
         }
 
         .api-endpoint .path {
@@ -575,49 +632,6 @@
             margin: 0.75rem 0;
             font-size: 0.875rem;
             border: 1px solid var(--border-color);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --background-color: #0f172a;
-                --card-background: #1e293b;
-                --text-primary: #f8fafc;
-                --text-secondary: #94a3b8;
-                --border-color: #334155;
-            }
-
-            .api-endpoint {
-                background-color: #1e293b;
-            }
-
-            .api-endpoint pre {
-                background-color: #0f172a;
-            }
-
-            #messageBox.error {
-                background-color: #450a0a;
-                border-color: #991b1b;
-            }
-
-            #messageBox.success {
-                background-color: #052e16;
-                border-color: #166534;
-            }
-
-            .api-endpoint .method.get {
-                background-color: #1e3a8a;
-                color: #bfdbfe;
-            }
-
-            .api-endpoint .method.post {
-                background-color: #166534;
-                color: #bbf7d0;
-            }
-
-            .api-endpoint .method.delete {
-                background-color: #991b1b;
-                color: #fecaca;
-            }
         }
 
         .feed-section {
@@ -646,7 +660,7 @@
 
         .pagination button {
             padding: 0.5rem 0.75rem;
-            background-color: var(--background-color);
+            background-color: var(--surface-muted);
             color: var(--text-primary);
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
@@ -677,6 +691,7 @@
             right: 2rem;
             background-color: var(--primary-color);
             color: white;
+            border: 1px solid var(--border-color);
             width: 3rem;
             height: 3rem;
             border-radius: 50%;
@@ -739,13 +754,6 @@
 
         .footer a:hover {
             color: var(--primary-hover);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .footer {
-                background-color: var(--card-background);
-                border-color: var(--border-color);
-            }
         }
     </style>
 </head>
@@ -1317,6 +1325,8 @@
 
         // 返回顶部功能
         const backToTopButton = document.getElementById('backToTop');
+        backToTopButton.type = 'button';
+        backToTopButton.setAttribute('aria-label', 'Back to top');
 
         // 监听滚动事件
         window.addEventListener('scroll', () => {
